@@ -1,14 +1,23 @@
 from lfads.run_lfads import main, FLAGS, build_model
 from lorenz.utils import struct
 import numpy as np
+import tensorflow as tf
+import shutil
 
 
 def test_lfads_chaotic_rnn_input_pulses_gaussian_noise():
+    try:
+        shutil.rmtree('./test/lfads/output1')
+    except FileNotFoundError as e:
+        pass
+
+    tf.compat.v1.reset_default_graph()
+
     # Run LFADS on chaotic rnn data with no input pulses (g = 1.5) with Gaussian noise
     FLAGS.kind = 'train'
     FLAGS.data_dir = './lfads/synth_data/generated/rnn_synth_data_v1.0'
-    FLAGS.data_filename_stem = 'gaussian_chaotic_rnn_no_inputs_short_set_dataset_N50_S50'
-    FLAGS.lfads_save_dir = './lfads/synth_data/output/lfads_chaotic_rnn_inputs_g2p5'
+    FLAGS.data_filename_stem = 'gaussian_chaotic_rnn_no_inputs'
+    FLAGS.lfads_save_dir = './test/lfads/output1'
     FLAGS.co_dim = 1
     FLAGS.factors_dim = 20
     FLAGS.output_dist = 'gaussian'
@@ -17,20 +26,31 @@ def test_lfads_chaotic_rnn_input_pulses_gaussian_noise():
 
     main(None)
 
-def test_lfads_inner():
+    shutil.rmtree('./test/lfads/output1')
 
+
+def test_lfads_inner():
+    try:
+        shutil.rmtree('./test/lfads/output2')
+    except FileNotFoundError as e:
+        pass
+
+    tf.compat.v1.reset_default_graph()
+    
     datasets = {
         'dummy': {
-            'train_data': np.random.randn(15, 100, 10).cumsum(axis=1),
-            'valid_data': np.random.randn(5, 100, 10).cumsum(axis=1),
+            'train_data': np.random.randn(200, 100, 10).cumsum(axis=1),
+            'valid_data': np.random.randn(50, 100, 10).cumsum(axis=1),
             'data_dim': 10, # Number of neurons
-            'num_steps': 100 # Time-steps
+            'num_steps': 100, # Time-steps
+            'train_ext_input': None,
+            'valid_ext_input': None,
         }
     }
 
     hps = {
         '_clip_value': 80,
-        'batch_size': 128,
+        'batch_size': 20,
         'cell_clip_value': 5.0,
         'cell_weight_scale': 1.0,
         'checkpoint_name': 'lfads_vae',
@@ -42,8 +62,6 @@ def test_lfads_inner():
         'con_dim': 128,
         'controller_input_lag': 1,
         'csv_log': 'fitlog',
-        'data_dir': './lfads/synth_data/generated/rnn_synth_data_v1.0',
-        'data_filename_stem': 'gaussian_chaotic_rnn_no_inputs',
         'device': 'gpu:0',
         'do_causal_controller': False,
         'do_feed_factors_to_controller': True,
@@ -80,7 +98,7 @@ def test_lfads_inner():
         'learning_rate_init': 0.01,
         'learning_rate_n_to_compare': 1,
         'learning_rate_stop': 0.01,
-        'lfads_save_dir': './lfads/synth_data/output/lfads_chaotic_rnn_inputs_g2p5',
+        'lfads_save_dir': './test/lfads/output2',
         'max_ckpt_to_keep': 5,
         'max_ckpt_to_keep_lve': 5,
         'max_grad_norm': 200.0,
@@ -108,8 +126,13 @@ def test_lfads_inner():
     if hps.num_steps_for_gen_ic > hps.num_steps:
         hps.num_steps_for_gen_ic = hps.num_steps
 
-    model = build_model(hps, kind="train", datasets=datasets)
 
-    model.train_model(datasets)
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True,
+                            log_device_placement=False)
 
-    print(1)
+    sess = tf.compat.v1.Session(config=config)
+    with sess.as_default():
+        model = build_model(hps, kind="train", datasets=datasets)
+        model.train_model(datasets)
+
+    shutil.rmtree('./test/lfads/output2')
