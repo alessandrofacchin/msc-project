@@ -9,3 +9,5 @@ sklearn
 imageio
 tensorflow-probability
 jupyter
+jax>=0.1.75
+jaxlib
