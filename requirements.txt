@@ -7,9 +7,6 @@ imageio==2.9.0
 ipykernel==5.5.5
 ipython==7.23.1
 jax==0.1.75
-jax==0.2.13
-jaxlib==0.1.51
-jaxlib==0.1.65+cuda110
 jupyter==1.0.0
 matplotlib==3.4.2
 numpy==1.20.3
@@ -19,3 +16,5 @@ scipy==1.6.3
 six==1.16.0
 tensorflow-probability==0.12.2
 tensorflow==2.5.0
+--extra-index-url https://storage.googleapis.com/jax-releases/jax_releases.html
+jaxlib==0.1.51+cuda110
