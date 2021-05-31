@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def CropLayer(dim, start, end, **kwargs):
+def Crop(dim, start, end, **kwargs):
     # Crops (or slices) a Tensor on a given dimension from start to end
     # example : to crop tensor x[:, :, 5:10]
 
@@ -20,4 +20,4 @@ def CropLayer(dim, start, end, **kwargs):
         if dimension == 4:
             return x[:, :, :, :, start:end]
 
-    return tf.keras.Lambda(func, **kwargs)
+    return tf.keras.layers.Lambda(func, **kwargs)
