@@ -69,7 +69,7 @@ class LorenzGenerator(object):
         lorenz = np.array([x[warmup:], y[warmup:], z[warmup:]])
         np.random.shuffle(lorenz) # Mixing columns
 
-        return np.array(t[warmup:]), stats.zscore(lorenz, axis=1).reshape(lorenz.shape).transpose()
+        return np.array(t[warmup:]) - t[warmup], stats.zscore(lorenz, axis=1).reshape(lorenz.shape).transpose()
 
     def generate_rates(self, n: int=30, base: float=5, x0: float=0, y0: float=1, z0: float=1.05, l: int=3,
     start: float=0, stop: float=1, step: float=0.006, warmup: int=0, seed: int=None, trials: int=1) -> Tuple[np.ndarray, np.ndarray]:

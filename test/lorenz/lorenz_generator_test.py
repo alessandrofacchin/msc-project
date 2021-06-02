@@ -61,3 +61,17 @@ def test_lorenz_generate_spikes_and_behaviour_ones():
     np.testing.assert_equal(z.shape, (1, 1, np.ceil(1/0.006), 3))
     np.testing.assert_almost_equal(t[0], 0)
     np.testing.assert_almost_equal(t[-1], 0.996)
+
+def test_lorenz_generate_spikes_with_warmup():
+    g = LorenzGenerator()
+    t, b, s, f, bw, w, z = g.generate_spikes_and_behaviour(n=1, trials=1, conditions=1, l=1, b=1, y=1, warmup=1000)
+
+    np.testing.assert_equal(t.shape, (np.ceil(1/0.006),))
+    np.testing.assert_equal(b.shape, (1, 1, np.ceil(1/0.006), 1))
+    np.testing.assert_equal(s.shape, (1, 1, np.ceil(1/0.006), 1))
+    np.testing.assert_equal(f.shape, (1, 1, np.ceil(1/0.006), 1))
+    np.testing.assert_equal(bw.shape, (1, 1, 1))
+    np.testing.assert_equal(w.shape, (1, 1, 1))
+    np.testing.assert_equal(z.shape, (1, 1, np.ceil(1/0.006), 3))
+    np.testing.assert_almost_equal(t[0], 0)
+    np.testing.assert_almost_equal(t[-1], 0.996)
