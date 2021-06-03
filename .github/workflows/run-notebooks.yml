@@ -14,7 +14,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@master
       with:
-        python-version: $PYTHON
+        python-version: 3.8
     - name: Install dependencies
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
