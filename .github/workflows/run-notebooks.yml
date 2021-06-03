@@ -20,8 +20,10 @@ jobs:
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         $CONDA/bin/conda env update --file environment.yml --name latentneural
         $CONDA/bin/conda init bash
-        conda activate latentneural
+    - name: H5PY Fix
+      run: |
         # Workaround for h5py installation
+        $CONDA/bin/conda activate latentneural
         pip uninstall h5py
         pip install h5py
     - name: Lint with mypy
