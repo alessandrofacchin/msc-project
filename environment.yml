@@ -2,11 +2,13 @@ name: latentneural
 channels:
   - defaults
   - conda-forge
+  - plotly
 dependencies:
   - python=3.8
   - h5py
   - imageio
   - ipykernel
+  - ipympl
   - jupyter
   - matplotlib
   - numpy<1.20
@@ -15,8 +17,10 @@ dependencies:
   - tensorflow>=2.*
   - tensorflow-gpu
   - tensorflow-probability
-  - pytest
+  - pandas
   - pip=20.2.*
+  - plotly
+  - pytest
   - pip:
     - --requirement requirements.txt
 variables:
