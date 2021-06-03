@@ -20,20 +20,22 @@ jobs:
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         $CONDA/bin/conda env update --file environment.yml --name latentneural
         $CONDA/bin/conda init bash
+        source $CONDA/etc/profile.d/conda.sh
     - name: H5PY Fix
       run: |
         # Workaround for h5py installation
-        source $CONDA/etc/profile.d/conda.sh
         conda activate latentneural
         pip uninstall h5py -y
         pip install h5py
     - name: Lint with mypy
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        $CONDA/bin/mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --module latentneural
+        conda activate latentneural
+        mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --module latentneural
     - name: Test with pytest
       run: |
-        $CONDA/bin/pytest --cov=latentneural --cov-report=xml
+        conda activate latentneural
+        pytest --cov=latentneural --cov-report=xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
