@@ -22,7 +22,6 @@ dependencies:
   - pip=20.2.*
   - plotly
   - pytest
-  - pytest-codecov
   - pip:
     - --requirement requirements.txt
 variables:
