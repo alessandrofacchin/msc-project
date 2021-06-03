@@ -25,7 +25,7 @@ jobs:
         # Workaround for h5py installation
         source $CONDA/etc/profile.d/conda.sh
         conda activate latentneural
-        pip uninstall h5py
+        pip uninstall h5py -y
         pip install h5py
     - name: Lint with mypy
       run: |
