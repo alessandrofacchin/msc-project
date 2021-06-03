@@ -9,6 +9,7 @@ jobs:
     env:
       OS: ubuntu-latest
       PYTHON: '3.8'
+      CPU_ONLY: 'TRUE'
     steps:
     - uses: actions/checkout@master
     - name: Setup Python
