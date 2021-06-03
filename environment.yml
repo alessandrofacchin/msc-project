@@ -11,6 +11,7 @@ dependencies:
   - ipympl
   - jupyter
   - matplotlib
+  - mypy
   - numpy<1.20
   - scikit-learn>=0.24.*
   - scipy
@@ -21,6 +22,7 @@ dependencies:
   - pip=20.2.*
   - plotly
   - pytest
+  - pytest-codecov
   - pip:
     - --requirement requirements.txt
 variables:

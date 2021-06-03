@@ -1,0 +1,42 @@
+name: Python CD/CI
+
+on: [push, pull-request]
+
+jobs:
+  build-linux:
+    name: 'Run Tests'
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      PYTHON: '3.8'
+    steps:
+    - uses: actions/checkout@master
+    - name: Setup Python
+      uses: actions/setup-python@master
+      with:
+        python-version: $PYTHON
+    - name: Install dependencies
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        $CONDA/bin/conda env update --file environment.yml --name latentneural
+        conda activate latentneural
+        # Workaround for h5py installation
+        pip uninstall h5py
+        pip install h5py
+    - name: Lint with mypy
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        $CONDA/bin/mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --module latentneural
+    - name: Test with pytest
+      run: |
+        $CONDA/bin/pytest --cov=latentneural --cov-report=xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml,./.coverage
+        directory: ./
+        env_vars: OS,PYTHON
+        name: codecov-umbrella
+        fail_ci_if_error: true
+        verbose: true
