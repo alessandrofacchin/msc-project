@@ -38,7 +38,7 @@ jobs:
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate latentneural
-        pytest -v -m "not slow" --cov=latentneural --cov-report=xml
+        pytest -v -m "not slow" --cov=latentneural --cov-report=xml --cov-config=.coveragerc
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
