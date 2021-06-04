@@ -9,6 +9,7 @@ dependencies:
   - imageio
   - ipykernel
   - ipympl
+  - json
   - jupyter
   - matplotlib
   - mypy

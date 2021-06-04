@@ -133,12 +133,17 @@ def test_build_dataset():
 
 @pytest.mark.unit
 def test_store_load_dataset(tmp_folder):
+    data = {
+        'nums': np.random.randn(100,100),
+    }
     DataManager.store_dataset(
+        data,
         {'hello': 'world'},
         tmp_folder
     )
-    data_dict = DataManager.load_dataset(
+    data_dict, settings = DataManager.load_dataset(
         tmp_folder
     )
 
-    assert data_dict == {'hello': 'world'}
+    np.testing.assert_equal(data_dict['nums'], data['nums'])
+    assert settings['hello'] == 'world'
