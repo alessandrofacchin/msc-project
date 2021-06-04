@@ -154,7 +154,7 @@ class DataManager(object):
         if neural_weights is not None:
             data_dict['neural_weights'] = neural_weights
 
-        return data_dict, settings
+        return data_dict, settings_out
 
     @staticmethod
     def store_dataset(dataset: Dict[str, np.ndarray], settings: Dict[str, Any], directory: str, filename: Optional[str]='data.h5'):
