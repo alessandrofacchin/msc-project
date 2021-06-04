@@ -90,7 +90,7 @@ def test_build_dataset():
     b = 2 # behaviour relevant latent variables
     l = 3 # neural latent variables (behaviour relevant + behaviour irrelevant)
 
-    data_dict = DataManager.build_dataset(
+    data_dict, settings = DataManager.build_dataset(
         neural_data=np.random.randn(k,t,n),
         behaviour_data=np.random.randn(k,t,y),
         noisless_behaviour_data=np.random.randn(k,t,y),
