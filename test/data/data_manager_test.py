@@ -113,7 +113,6 @@ def test_build_dataset():
             'train_behaviours',
             'valid_behaviours',
             'test_behaviours',
-            'settings',
             'train_behaviours_noiseless',
             'valid_behaviours_noiseless',
             'test_behaviours_noiseless',
@@ -129,6 +128,8 @@ def test_build_dataset():
             'neural_weights'
         ]
     ])
+
+    assert 'created' in list(settings.keys())
 
 
 @pytest.mark.unit
