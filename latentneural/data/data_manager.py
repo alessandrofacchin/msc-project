@@ -203,7 +203,7 @@ class DataManager(object):
         try:
             with h5py.File(data_fname, 'r') as hf:
                 for key in hf.keys():
-                    dataset[key] = hf[key].value
+                    dataset[key] = hf[key][()]
         except IOError as e:
             logger.error("Cannot open {:s} for writing.".format(data_fname))
             raise e
