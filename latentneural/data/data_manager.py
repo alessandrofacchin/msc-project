@@ -23,7 +23,7 @@ class DataManager(object):
         Returns:
             List[np.ndarray]: List of output arrays
         """
-        splits = [data[[index] + [slice(None)] * (data.ndim - 1)] for index in indices]
+        splits = [data[tuple([index] + [slice(None)] * (data.ndim - 1))] for index in indices]
         return splits
 
     @staticmethod
