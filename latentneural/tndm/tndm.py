@@ -3,7 +3,6 @@ from typing import Dict, Any
 
 from latentneural.utils import ArgsParser
 from .sampling import Sampling
-from .crop import Crop
 
 
 class TNDM(tf.keras.Model):
