@@ -5,7 +5,7 @@ import pytest
 from latentneural.utils import upsert_empty_folder, logger, remove_folder
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def lorenz_generator_filename():
     test_notebooks_folder = os.path.join('test', 'notebooks', 'deliverables')
     original_notebooks_folder = os.path.join('notebooks', 'deliverables')
@@ -23,7 +23,7 @@ def lorenz_generator_filename():
 
     return os.path.join('.', 'test', 'notebooks', 'deliverables', 'lorenz_generator.py')
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def cleanup(request):
     def remove_test_dir():
         test_notebooks_folder = os.path.join('test', 'notebooks', 'deliverables')
@@ -31,6 +31,7 @@ def cleanup(request):
     request.addfinalizer(remove_test_dir)
 
 @pytest.mark.notebook
+@pytest.mark.smoke
 def test_smoke_lorenz_generator(lorenz_generator_filename):
     runpy.run_path(lorenz_generator_filename)
     assert True
