@@ -1,6 +1,6 @@
 # Download
 
-The dataset from Kia Nazarpour's experiments is too heavy to be stored on GitHub. It is currently stored as part of a Dropbox folder with public access. In order to download the dataset, please run the following command from the main project directory:
+The dataset with Kia Nazarpour's experiments is too heavy to be stored on GitHub. It is currently stored as part of a Dropbox folder with public access. In order to download the dataset, please run the following command from the main project directory:
 ```
 make download-kia
 ```
