@@ -25,9 +25,9 @@ class TNDM(tf.keras.Model):
     dense_relevant_logvar_args: Dict[str, Any] = ArgsParser.get_or_default(kwargs, 'dense_relevant_logvar', {})
     self.dense_relevant_logvar = tf.keras.layers.Dense(relevant_dynamics, name="DenseRelevantLogVar", **dense_relevant_logvar_args)
     dense_irrelevant_mean_args: Dict[str, Any] = ArgsParser.get_or_default(kwargs, 'dense_irrelevant_mean', {})
-    self.dense_irrelevant_mean = tf.keras.layers.Dense(relevant_dynamics, name="DenseIrrelevantMean", **dense_irrelevant_mean_args)
+    self.dense_irrelevant_mean = tf.keras.layers.Dense(irrelevant_dynamics, name="DenseIrrelevantMean", **dense_irrelevant_mean_args)
     dense_irrelevant_logvar_args: Dict[str, Any] = ArgsParser.get_or_default(kwargs, 'dense_irrelevant_logvar', {})
-    self.dense_irrelevant_logvar = tf.keras.layers.Dense(relevant_dynamics, name="DenseIrrelevantLogVar", **dense_irrelevant_logvar_args)
+    self.dense_irrelevant_logvar = tf.keras.layers.Dense(irrelevant_dynamics, name="DenseIrrelevantLogVar", **dense_irrelevant_logvar_args)
 
     # SAMPLING
     self.relevant_sampling = Sampling(name="RelevantSampling")
