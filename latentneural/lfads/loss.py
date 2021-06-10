@@ -13,9 +13,11 @@ def log_normal_pdf(sample, mean, logvar, raxis=1):
 def compute_loss(model, neural, coefficients: List[float]=[1,1]):
     f, (g0_r, r_mean, r_logvar) = model.call(neural)
 
-    cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=f, labels=tf.cast(neural, tf.float32))
+    loglike = tf.nn.log_poisson_loss(
+        targets=tf.cast(neural, tf.float32), log_input=f, compute_full_loss=True
+    )
 
-    reconstruction_error_neural = tf.reduce_mean(cross_ent, axis=[1, 2])
+    reconstruction_error_neural = tf.reduce_mean(loglike, axis=[1, 2])
 
     kl_neural = log_normal_pdf(g0_r, 0., 0.) - log_normal_pdf(g0_r, r_mean, r_logvar)
 
