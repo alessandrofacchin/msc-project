@@ -11,10 +11,10 @@ def log_normal_pdf(sample, mean, logvar, raxis=1):
 
 @tf.function
 def compute_loss(model, neural, coefficients: List[float]=[1,1]):
-    f, (g0_r, r_mean, r_logvar) = model.call(neural)
+    log_f, (g0_r, r_mean, r_logvar) = model.call(neural)
 
     loglike = tf.nn.log_poisson_loss(
-        targets=tf.cast(neural, tf.float32), log_input=f, compute_full_loss=True
+        targets=tf.cast(neural, tf.float32), log_input=log_f, compute_full_loss=True
     )
 
     reconstruction_error_neural = tf.reduce_mean(loglike, axis=[1, 2])

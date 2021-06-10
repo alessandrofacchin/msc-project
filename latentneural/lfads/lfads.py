@@ -53,10 +53,10 @@ class LFADS(tf.keras.Model):
 
     z = self.dense(g, training=training)
 
-    f = self.neural_dense(z)
+    log_f = self.neural_dense(z)
 
     # In order to be able to auto-encode, the dimensions should be the same
     if not self.built:
-      assert all([f_i == i_i for f_i, i_i in zip(list(f.shape), list(inputs.shape))])
+      assert all([f_i == i_i for f_i, i_i in zip(list(log_f.shape), list(inputs.shape))])
 
-    return f, (g0, mean, logvar)
+    return log_f, (g0, mean, logvar)

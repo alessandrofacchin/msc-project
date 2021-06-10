@@ -56,8 +56,8 @@ def test_training_regression():
         coefficients=[5,1,1,1]
     )
 
-    n, _ = model.call(neural_data_train, training=False)
+    log_f, _ = model.call(neural_data_train, training=False)
 
-    probs = 1/(1 + np.exp(-n.numpy()))
+    probs = 1/(1 + np.exp(-log_f.numpy()))
     
     assert np.corrcoef(probs.flatten(), neural_data_train.flatten())[0,1] > 0 # Rates are correlated with actual spikes
