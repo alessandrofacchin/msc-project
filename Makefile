@@ -21,3 +21,6 @@ download-lorenz:
 	--mkdir latentneural/data/storage/lorenz/20210604T155502
 	--wget -O latentneural/data/storage/lorenz/20210604T155502/metadata.json https://www.dropbox.com/s/tvfl8z7k8k37vy4/metadata.json?dl=1
 	--wget -O latentneural/data/storage/lorenz/20210604T155502/dataset.h5 https://www.dropbox.com/s/6nwvbmw3r36i6wh/dataset.h5?dl=1
+
+tensorboard-view:
+	--tensorboard dev upload --logdir latentneural/data/storage/lorenz/20210610T215300/results/lfads_log
