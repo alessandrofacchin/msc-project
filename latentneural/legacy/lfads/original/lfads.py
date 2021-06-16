@@ -1131,7 +1131,7 @@ class LFADS(object):
     Returns:
       The randomized, properly shaped indicies.
     """
-    assert nexamples > batch_size, "Problems"
+    assert nexamples > batch_size, "Problems: nexamples={}, batch_size={}".format(nexamples, batch_size)
     bmrem = batch_size - nexamples % batch_size
     bmrem_examples = []
     if bmrem < batch_size:
