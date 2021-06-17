@@ -5,8 +5,6 @@ from typing import List, Tuple
 from .loss import compute_loss
 
 
-tf.config.run_functions_eagerly(True)
-
 @tf.function
 def train_step(model: tf.keras.Model, neural: tf.Tensor, behaviour: tf.Tensor, optimizer: tf.optimizers.Optimizer, 
     coefficients: List[float]=[1,1,1,1]):

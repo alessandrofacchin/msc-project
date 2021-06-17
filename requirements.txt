@@ -9,5 +9,6 @@ gast==0.3.3
 pytest-codecov
 tensorboard
 tensorflow-gpu
+pytest-ordering
 git+https://github.com/tensorflow/docs
 -e .

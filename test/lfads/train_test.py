@@ -6,13 +6,9 @@ from latentneural import LFADS
 from latentneural.lfads.adaptive_weights import AdaptiveWeights
 from latentneural.lfads.train import train
 
-@pytest.fixture(scope='function')
-def enable_eager():
-    tf.compat.v1.enable_eager_execution() # this way, line 317 runs
-    return None
 
 @pytest.mark.unit
-def test_train_model_quick(enable_eager):
+def test_train_model_quick():
     neural_data_train = np.random.binomial(1, 0.5, (10, 100, 50)).astype(float) # test_trials X time X neurons
     neural_data_val = np.random.binomial(1, 0.5, (2, 100, 50)).astype(float) # val_trials X time X neurons
     
@@ -38,7 +34,7 @@ def test_train_model_quick(enable_eager):
 
 @pytest.mark.regression
 @pytest.mark.slow
-def test_training_regression(enable_eager):
+def test_training_regression():
     neural_data_train = np.random.binomial(1, 0.5, (10, 100, 50)).astype(float) # test_trials X time X neurons
     neural_data_val = np.random.binomial(1, 0.5, (2, 100, 50)).astype(float) # val_trials X time X neurons
     
@@ -65,7 +61,7 @@ def test_training_regression(enable_eager):
     assert np.corrcoef(probs.flatten(), neural_data_train.flatten())[0,1] > 0 # Rates are correlated with actual spikes
 
 @pytest.mark.unit
-def test_train_wrap(enable_eager):
+def test_train_wrap():
     train(
         model_settings={}, 
         optimizer=tf.keras.optimizers.Adam(1e-3), 

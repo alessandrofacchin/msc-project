@@ -10,7 +10,6 @@ from .lfads import LFADS
 
 tf.config.run_functions_eagerly(True)
 
-    
 def train(model_settings: Dict[str, Any], optimizer: tf.optimizers.Optimizer, epochs: int, 
     train_dataset: tf.Tensor, adaptive_weights: AdaptiveWeights, 
     val_dataset: Optional[tf.Tensor]=None, batch_size: Optional[int]=None):

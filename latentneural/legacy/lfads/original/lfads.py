@@ -76,8 +76,6 @@ from latentneural.legacy.lfads.original.utils import log_sum_exp, flatten
 from latentneural.legacy.lfads.original.plot_lfads import plot_lfads
 
 
-tf.compat.v1.disable_eager_execution() # this way, line 317 runs
-
 class GRU(object):
   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078).
 
@@ -296,6 +294,7 @@ class LFADS(object):
       kind: the type of model to build (see above).
       datasets: a dictionary of named data_dictionaries, see top of lfads.py
     """
+    tf.compat.v1.disable_eager_execution() # this way, line 317 runs
     print("Building graph...")
     all_kinds = ['train', 'posterior_sample_and_average', 'posterior_push_mean',
                  'prior_sample']

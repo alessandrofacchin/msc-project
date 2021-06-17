@@ -6,13 +6,9 @@ from tensorflow.python.ops.numpy_ops.np_array_ops import asarray
 from latentneural import LFADS
 from latentneural.lfads.adaptive_weights import AdaptiveWeights
 
-@pytest.fixture(scope='function')
-def enable_eager():
-    tf.compat.v1.enable_eager_execution() # this way, line 317 runs
-    return None
 
 @pytest.mark.unit
-def test_dimensionality(enable_eager):
+def test_dimensionality():
     input_data = np.exp(np.random.randn(10, 100, 50)) # trials X time X neurons
     model = LFADS(neural_space=50)
     model.build(input_shape=[None] + list(input_data.shape[1:]))
@@ -32,7 +28,7 @@ def test_dimensionality(enable_eager):
     tf.debugging.assert_equal(g0_r.shape, tf.TensorShape([10, 64]))
 
 @pytest.mark.unit
-def test_adaptive_weights(enable_eager):
+def test_adaptive_weights():
 
     input_data = np.exp(np.random.randn(10, 100, 50)) # trials X time X neurons
 
