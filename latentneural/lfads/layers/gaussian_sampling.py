@@ -1,8 +1,11 @@
 import tensorflow as tf
 
 
-class Sampling(tf.keras.layers.Layer):
+class GaussianSampling(tf.keras.layers.Layer):
     """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
+
+    def __init__(self, name: str="GaussianSampling"):
+        super(GaussianSampling, self).__init__(name=name)
 
     def call(self, inputs, training: bool=True):
         if training:
