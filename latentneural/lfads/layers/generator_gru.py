@@ -13,7 +13,7 @@ class GeneratorGRU(tf.keras.layers.Layer):
   fewer inputs than recurrent state.
 
   """
-  def __init__(self, units: int, forget_bias: float=1.0, clip_value: float=np.inf, name: str="GeneratorGRU", 
+  def __init__(self, units: int, forget_bias: float=1.0, clip_value: float=5, name: str="GeneratorGRU", 
     kernel_initializer=tf.keras.initializers.GlorotUniform(), kernel_regularizer=tf.keras.regularizers.l2(l=0.01), **kwargs):
     """Create a GRU object.
 
