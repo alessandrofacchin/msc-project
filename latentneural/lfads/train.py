@@ -1,39 +1,45 @@
+from tensorflow.python.types.core import Value
+from latentneural.lfads.adaptive_weights import AdaptiveWeights
 import time
 import tensorflow as tf
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Dict, Any
+import numpy as np
 
-from .loss import compute_loss
+from .lfads import LFADS
 
 
 tf.config.run_functions_eagerly(True)
 
-@tf.function
-def train_step(model: tf.keras.Model, neural: tf.Tensor, optimizer: tf.optimizers.Optimizer, 
-    coefficients: List[float]=[1,1,1,1]):
-    """Executes one training step and returns the loss.
-
-    This function computes the loss and gradients, and uses the latter to
-    update the model's parameters.
-    """
-    with tf.GradientTape() as tape:
-        loss = compute_loss(model, neural, coefficients=coefficients)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-def train_model(model: tf.keras.Model, optimizer: tf.optimizers.Optimizer, epochs: int, 
-    train_dataset: List[Tuple[tf.Tensor, tf.Tensor]], val_dataset: List[Tuple[tf.Tensor, tf.Tensor]], 
-    coefficients: List[float]=[1,1,1,1]):
     
-    for epoch in range(1, epochs + 1):
-        start_time = time.time()
-        for neural in train_dataset:
-            train_step(model, neural, optimizer, coefficients=coefficients)
-        end_time = time.time()
+def train(model_settings: Dict[str, Any], optimizer: tf.optimizers.Optimizer, epochs: int, 
+    train_dataset: tf.Tensor, adaptive_weights: AdaptiveWeights, 
+    val_dataset: Optional[tf.Tensor]=None, batch_size: Optional[int]=None):
+    
+    assert len(train_dataset) > 0, ValueError('Please provide a non-empty train dataset')
+    dims = train_dataset.shape[1:] 
+    if val_dataset is not None:
+        assert dims == val_dataset.shape[1:], ValueError('Validation and training datasets must have coherent sizes')
 
-        loss = tf.keras.metrics.Mean()
-        for neural in val_dataset:
-            loss(compute_loss(model, neural, coefficients=coefficients))
-        elbo = -loss.result()
-        
-        print('Epoch: {}, Test set ELBO: {}, time elapse for current epoch: {}'
-                .format(epoch, elbo, end_time - start_time))
+    model = LFADS(
+        neural_space=dims[-1],
+        **model_settings
+    )
+
+    model.build(input_shape=[None] + list(dims))
+
+    model.compile(
+        optimizer=optimizer,
+        loss_weights=adaptive_weights.w
+    )
+
+    model.fit(
+        x=train_dataset, 
+        y=None, 
+        callbacks=[adaptive_weights], 
+        shuffle=True, 
+        epochs=epochs, 
+        validation_data=(val_dataset, None),
+        batch_size=batch_size
+    )
+
+    return model
