@@ -179,7 +179,7 @@ class LFADS(tf.keras.Model):
     else:
       return tks[0].split('_')[-1] + '_' + tks[1].replace('_', '')
 
-  # @tf.function
+  @tf.function
   def train_step(self, data):
     """The logic for one training step.
     This method can be overridden to support custom training logic.
