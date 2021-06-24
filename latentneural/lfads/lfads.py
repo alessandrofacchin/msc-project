@@ -6,6 +6,8 @@ from latentneural.utils import ArgsParser
 from .layers import GaussianSampling, GeneratorGRU
 
 
+tf.config.run_functions_eagerly(True)
+
 class LFADS(tf.keras.Model):
 
   def __init__(self, **kwargs: Dict[str, Any]):

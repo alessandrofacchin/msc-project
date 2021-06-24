@@ -7,6 +7,8 @@ from latentneural.utils import ArgsParser
 from .layers import GaussianSampling, GeneratorGRU
 
 
+tf.config.run_functions_eagerly(True)
+
 class TNDM(tf.keras.Model):
 
   def __init__(self, **kwargs: Dict[str, Any]):
@@ -16,7 +18,7 @@ class TNDM(tf.keras.Model):
     self.irrelevant_factors: int = ArgsParser.get_or_default(kwargs, 'irrelevant_factors', 3)
     self.relevant_factors: int = ArgsParser.get_or_default(kwargs, 'relevant_factors', 3)
     self.neural_space: int = ArgsParser.get_or_default(kwargs, 'neural_space', 50)
-    self.behavioural_space: int = ArgsParser.get_or_default(kwargs, 'behavioural_space', 50)
+    self.behavioural_space: int = ArgsParser.get_or_default(kwargs, 'behavioural_space', 1)
     self.max_grad_norm: float = ArgsParser.get_or_default(kwargs, 'max_grad_norm', 200)
     self.timestep: float = ArgsParser.get_or_default(kwargs, 'timestep', 0.01)
     self.prior_variance: float = ArgsParser.get_or_default(kwargs, 'prior_variance', 0.1)
@@ -246,7 +248,7 @@ class TNDM(tf.keras.Model):
     @tf.function
     def loss_fun(y_true, y_pred):
       # KL DIVERGENCE
-      (_, (_, _, _), _, _), regularization = y_pred
+      _, regularization = y_pred
       return tf.reduce_sum(regularization)
     return loss_fun
 
@@ -310,7 +312,7 @@ class TNDM(tf.keras.Model):
     self.tracker_loss_neural_loglike.update_state(neural_loglike_loss)
     self.tracker_loss_behavioural_loglike.update_state(behavioural_loglike_loss)
     self.tracker_loss_relevant_kldiv.update_state(relevant_kldiv_loss)
-    self.tracker_loss_irrelevant_kldiv.update_state(relevant_kldiv_loss)
+    self.tracker_loss_irrelevant_kldiv.update_state(irrelevant_kldiv_loss)
     self.tracker_loss_reg.update_state(reg_loss)
     self.tracker_loss_w_loglike.update_state(self.loss_weights[0])
     self.tracker_loss_w_kldiv.update_state(self.loss_weights[1])
@@ -382,7 +384,7 @@ class TNDM(tf.keras.Model):
     self.tracker_loss_neural_loglike.update_state(neural_loglike_loss)
     self.tracker_loss_behavioural_loglike.update_state(behavioural_loglike_loss)
     self.tracker_loss_relevant_kldiv.update_state(relevant_kldiv_loss)
-    self.tracker_loss_irrelevant_kldiv.update_state(relevant_kldiv_loss)
+    self.tracker_loss_irrelevant_kldiv.update_state(irrelevant_kldiv_loss)
     self.tracker_loss_reg.update_state(reg_loss)
     self.tracker_loss_count.update_state(x.shape[0])
 
