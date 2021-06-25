@@ -143,3 +143,4 @@ latentneural/legacy
 latentneural/data/storage/**/*.v2
 latentneural/data/storage/**/*.profile-empty
 latentneural/data/storage/**/plugins/
+latentneural/test/mocks/runtime_test_outputs/

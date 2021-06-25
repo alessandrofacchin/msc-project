@@ -19,7 +19,8 @@ class MaskedDense(tf.keras.layers.Dense):
         self.timesteps = input_shape[-2]
         self.mask_out_size = self.units
         self.units *= self.timesteps
-        super(MaskedDense, self).build(tf.TensorShape([None, np.prod(input_shape[1:])]))
+        super(MaskedDense, self).build(
+            tf.TensorShape([None, np.prod(input_shape[1:])]))
         self.mask_in_size = int(input_shape[-1])
 
         self.input_spec = tf.keras.layers.InputSpec(
