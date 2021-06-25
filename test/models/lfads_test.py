@@ -1,12 +1,30 @@
 import tensorflow as tf
 import numpy as np
 import pytest
-import os
 
 from latentneural import LFADS
 from latentneural.utils import AdaptiveWeights
-from latentneural.lfads.train import train
 
+
+@pytest.mark.unit
+def test_dimensionality():
+    input_data = np.exp(np.random.randn(10, 100, 50)) # trials X time X neurons
+    model = LFADS(neural_space=50)
+    model.build(input_shape=[None] + list(input_data.shape[1:]))
+    
+    log_f, (g0_r, r_mean, r_logvar), z, inputs = model.call(input_data, training=True)
+
+    tf.debugging.assert_equal(log_f.shape, tf.TensorShape([10, 100, 50]))
+    tf.debugging.assert_equal(r_mean.shape, tf.TensorShape([10, 64]))
+    tf.debugging.assert_equal(r_logvar.shape, tf.TensorShape([10, 64]))
+    tf.debugging.assert_equal(g0_r.shape, tf.TensorShape([10, 64]))
+
+    log_f, (g0_r, r_mean, r_logvar), z, inputs = model.call(input_data, training=False)
+
+    tf.debugging.assert_equal(log_f.shape, tf.TensorShape([10, 100, 50]))
+    tf.debugging.assert_equal(r_mean.shape, tf.TensorShape([10, 64]))
+    tf.debugging.assert_equal(r_logvar.shape, tf.TensorShape([10, 64]))
+    tf.debugging.assert_equal(g0_r.shape, tf.TensorShape([10, 64]))
 
 @pytest.mark.unit
 def test_train_model_quick():
@@ -60,38 +78,3 @@ def test_training_regression():
     probs = 1/(1 + np.exp(-log_f.numpy()))
     
     assert np.corrcoef(probs.flatten(), neural_data_train.flatten())[0,1] > 0 # Rates are correlated with actual spikes
-
-@pytest.mark.unit
-def test_train_wrap():
-    train(
-        model_settings={}, 
-        optimizer=tf.keras.optimizers.Adam(1e-3), 
-        epochs=2, 
-        train_dataset=np.random.binomial(1, 0.5, (100, 100, 50)).astype(float), 
-        val_dataset=np.random.binomial(1, 0.5, (20, 100, 50)).astype(float), 
-        adaptive_weights=AdaptiveWeights(
-            initial=[1, 0, 0],
-            update_rate=[0, 0.002, 0],
-        ),
-        batch_size=20
-    )
-
-@pytest.mark.unit
-def test_train_wrap_different_specs():
-    train(
-        model_settings=dict(
-            encoded_var_max=0.1,
-            original_generator=False
-        ), 
-        optimizer=tf.keras.optimizers.Adam(1e-3), 
-        epochs=2, 
-        train_dataset=np.random.binomial(1, 0.5, (100, 100, 50)).astype(float),
-        val_dataset=None,
-        adaptive_lr=dict(factor=0.95, patience=10, min_lr=1e-5),
-        logdir=os.path.join('.','latentneural','data','storage'),
-        adaptive_weights=AdaptiveWeights(
-            initial=[1, 0, 0],
-            update_rate=[0, 0.002, 0.002],
-        ),
-        batch_size=20
-    )

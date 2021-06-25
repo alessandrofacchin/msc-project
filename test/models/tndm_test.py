@@ -35,29 +35,25 @@ def test_dimensionality():
     tf.debugging.assert_equal(g0_i.shape, tf.TensorShape([10, 64]))
 
 @pytest.mark.unit
-def test_adaptive_weights():
-    input_data = np.exp(np.random.randn(10, 100, 50)) # trials X time X neurons
-    input_n_data = np.exp(np.random.randn(10, 100, 10)) # trials X time X behaviour
-
+def test_train_model_quick():
+    neural_data_train = np.random.binomial(1, 0.5, (10, 100, 50)).astype(float) # test_trials X time X neurons
+    behaviour_data_train = np.exp(np.random.randn(10, 100, 2)) # test_trials X time X behaviour
+    neural_data_val = np.random.binomial(1, 0.5, (2, 100, 50)).astype(float) # val_trials X time X neurons
+    behaviour_data_val = np.exp(np.random.randn(2, 100, 2)) # val_trials X time X behaviour
+    
     adaptive_weights = AdaptiveWeights(
-        initial=[0.5, 1, 1, 0, 0],
-        min_weight=[0., 0., 0., 0, 0],
-        max_weight=[1., 1., 1., 0, 0],
-        update_step=[1, 2, 1, 1, 1],
-        update_start=[2, 1, 1, 0, 0],
-        update_rate=[-0.05, -0.1, -0.01, 0, 0]
+        initial=[1.0, .0, .0, .0, .0],
+        update_start=[0, 0, 1000, 1000, 0],
+        update_rate=[0., 0., 0.0005, 0.0005, 0.0005],
+        min_weight=[1.0, 0.0, 0.0, 0.0, 0.0]
     )
 
-    model = TNDM(neural_space=50, behavioural_space=10, max_grad_norm=200)
-
-    model.build(input_shape=[None] + list(input_data.shape[1:]))
+    model = TNDM(neural_space=50, behaviour_space=2)
+    model.build(input_shape=[None] + list(neural_data_train.shape[1:]))
 
     model.compile(
         optimizer=tf.keras.optimizers.Adam(1e-3),
         loss_weights=adaptive_weights.w
     )
 
-    model.fit(x=input_data, y=input_n_data, callbacks=[adaptive_weights], shuffle=True, epochs=4)
-
-    tf.debugging.assert_equal(adaptive_weights.w[0], 0.45)
-    tf.debugging.assert_equal(adaptive_weights.w[1], 0.9)
+    model.fit(x=neural_data_train, y=behaviour_data_train, callbacks=[adaptive_weights], shuffle=True, epochs=4, validation_data=(neural_data_val, behaviour_data_val))
