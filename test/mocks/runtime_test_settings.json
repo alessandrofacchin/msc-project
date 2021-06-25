@@ -83,12 +83,12 @@
         }
     },
     "output": {
-        "directory": "latentneural/test/mocks/runtime_test_outputs",
+        "directory": "test/mocks/runtime_test_outputs",
         "save_plots": false,
         "save_settings": true
     },
     "data": {
-        "directory": "latentneural/data/storage/lorenz/20210610T215300",
+        "directory": "./latentneural/data/storage/lorenz/20210610T215300",
         "dataset_filename": "dataset.h5",
         "metadata_filename": "metadata.json",
         "neural_keys": {

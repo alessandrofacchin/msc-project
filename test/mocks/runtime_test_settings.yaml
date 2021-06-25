@@ -1,7 +1,7 @@
 data:
   behavioural_keys: {test: test_behaviours, train: train_behaviours, validation: valid_behaviours}
   dataset_filename: dataset.h5
-  directory: latentneural/data/storage/lorenz/20210610T215300
+  directory: ./latentneural/data/storage/lorenz/20210610T215300
   latent_keys: {test: test_latent, train: train_latent, validation: valid_latent}
   metadata_filename: metadata.json
   neural_keys: {test: test_data, train: train_data, validation: valid_data}
@@ -45,7 +45,7 @@ model:
     relevant_factors: 2
     timestep: 0.01
   type: tndm
-output: {directory: latentneural/test/mocks/runtime_test_outputs, save_plots: false,
+output: {directory: test/mocks/runtime_test_outputs, save_plots: false,
   save_settings: true}
 runtime:
   batch_size: 32
