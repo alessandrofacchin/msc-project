@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import pytest
-import os
 
 from latentneural import TNDM, LFADS
 from latentneural.utils import AdaptiveWeights

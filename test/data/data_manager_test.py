@@ -1,10 +1,9 @@
 import numpy as np
 import pytest
 import os
-import shutil
 
 from latentneural.data import DataManager
-from latentneural.utils import logger, upsert_empty_folder, remove_folder
+from latentneural.utils import remove_folder, upsert_empty_folder
 
 
 @pytest.fixture(scope='module')

@@ -1,6 +1,4 @@
-from typing import Generator
 import tensorflow as tf
-import numpy as np
 
 
 class GeneratorGRU(tf.keras.layers.Layer):

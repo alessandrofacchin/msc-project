@@ -1,7 +1,6 @@
 import tensorflow as tf
 from typing import List, Optional, Any
 import numpy as np
-import sys
 
 
 class AdaptiveWeights(tf.keras.callbacks.Callback):

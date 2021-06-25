@@ -1,7 +1,5 @@
 import tensorflow as tf
 from typing import Dict, Any
-from tensorflow import keras
-from tensorflow.python.ops.init_ops_v2 import Initializer
 import tensorflow_probability as tfp
 import math as m
 from collections import defaultdict

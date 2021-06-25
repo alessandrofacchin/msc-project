@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from latentneural.lorenz import initial_conditions
 from latentneural.lorenz.initial_conditions import uniform
 from latentneural.lorenz import LorenzGenerator, bo
 
