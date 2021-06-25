@@ -63,10 +63,10 @@ class LFADS(tf.keras.Model):
                 ))
             self.encoded_var_trainable = False
 
-        forward_layer = tf.keras.layers.LSTM(
-            self.encoded_space, time_major=False, name="EncoderLSTMForward", return_sequences=True, **encoder_args)
-        backward_layer = tf.keras.layers.LSTM(
-            self.encoded_space, time_major=False, name="EncoderLSTMBackward", return_sequences=True, go_backwards=True, **encoder_args)
+        forward_layer = tf.keras.layers.GRU(
+            self.encoded_space, time_major=False, name="EncoderGRUForward", return_sequences=True, **encoder_args)
+        backward_layer = tf.keras.layers.GRU(
+            self.encoded_space, time_major=False, name="EncoderGRUBackward", return_sequences=True, go_backwards=True, **encoder_args)
         self.encoder = tf.keras.layers.Bidirectional(
             forward_layer, backward_layer=backward_layer, name='EncoderRNN')
         self.flatten_post_encoder = tf.keras.layers.Flatten()
