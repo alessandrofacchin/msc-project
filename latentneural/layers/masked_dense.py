@@ -51,7 +51,7 @@ class MaskedDense(tf.keras.layers.Dense):
             [self.timesteps, self.mask_out_size]
         )
 
-    # @tf.function
+    @tf.function
     def call(self, inputs):
         x = self.inbound_reshape(inputs)
         y = tf.matmul(x, tf.math.multiply(self.kernel, self.mask))
