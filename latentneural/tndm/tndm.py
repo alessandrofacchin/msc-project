@@ -179,7 +179,7 @@ class TNDM(tf.keras.Model):
     
     return (g0_r, mean_r, logvar_r), (g0_i, mean_i, logvar_i)
 
-  def compile(self, optimizer, loss_weights, *args, **kwargs):
+  def compile(self, optimizer, loss_weights: tf.Variable, *args, **kwargs):
     super(TNDM, self).compile(
       loss=[
         TNDM.poisson_loglike_loss(self.timestep),
@@ -190,6 +190,8 @@ class TNDM(tf.keras.Model):
       optimizer=optimizer,
       )
     self.loss_weights=loss_weights
+    assert (loss_weights.shape == (5,)), ValueError('The adaptive weights must have size 5 for TNDM')
+    
     self.tracker_gradient_dict = {'grads/' + TNDM.clean_layer_name(x.name): \
       tf.keras.metrics.Sum(name=TNDM.clean_layer_name(x.name)) for x in \
         self.trainable_variables if 'bias' not in x.name.lower()}

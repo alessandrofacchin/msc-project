@@ -5,7 +5,7 @@ import os
 
 from latentneural import TNDM
 from latentneural.tndm.train import train
-from latentneural.tndm.adaptive_weights import AdaptiveWeights
+from latentneural.utils import AdaptiveWeights
 
 
 @pytest.mark.unit
@@ -17,8 +17,8 @@ def test_train_model_quick():
     
     adaptive_weights = AdaptiveWeights(
         initial=[1.0, .0, .0, .0, .0],
-        update_starts=[0, 0, 1000, 1000, 0],
-        update_rates=[0., 0., 0.0005, 0.0005, 0.0005],
+        update_start=[0, 0, 1000, 1000, 0],
+        update_rate=[0., 0., 0.0005, 0.0005, 0.0005],
         min_weight=[1.0, 0.0, 0.0, 0.0, 0.0]
     )
 
@@ -42,7 +42,7 @@ def test_train_wrap():
         val_dataset=(np.random.binomial(1, 0.5, (2, 100, 50)).astype(float), np.exp(np.random.randn(2, 100, 4))), 
         adaptive_weights=AdaptiveWeights(
             initial=[1, 0, 0, 0, 0],
-            update_rates=[0, 0.002, 0.002, 0, 0],
+            update_rate=[0, 0.002, 0.002, 0, 0],
         ),
         batch_size=20
     )
@@ -62,7 +62,7 @@ def test_train_wrap_different_specs():
         logdir=os.path.join('.','latentneural','data','storage'),
         adaptive_weights=AdaptiveWeights(
             initial=[1, 0, 0, 0, 0],
-            update_rates=[0, 0.002, 0.002, 0, 0],
+            update_rate=[0, 0.002, 0.002, 0, 0],
         ),
         batch_size=20
     )

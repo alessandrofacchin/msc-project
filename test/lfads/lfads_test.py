@@ -4,7 +4,7 @@ import pytest
 from tensorflow.python.ops.numpy_ops.np_array_ops import asarray
 
 from latentneural import LFADS
-from latentneural.lfads.adaptive_weights import AdaptiveWeights
+from latentneural.utils import AdaptiveWeights
 
 
 @pytest.mark.unit
@@ -35,10 +35,10 @@ def test_adaptive_weights():
     adaptive_weights = AdaptiveWeights(
         initial=[0.5, 1, 1],
         min_weight=[0., 0., 0.],
-        max_weight=[1., 1., 1.],
-        update_steps=[1, 2, 1],
-        update_starts=[2, 1, 1],
-        update_rates=[-0.05, -0.1, -0.01]
+        max_weight=[1.],
+        update_step=[1, 2, 1],
+        update_start=[2, 1, 1],
+        update_rate=[-0.05, -0.1, -0.01]
     )
 
     model = LFADS(neural_space=50, max_grad_norm=200)

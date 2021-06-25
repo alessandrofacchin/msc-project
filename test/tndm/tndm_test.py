@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from latentneural import TNDM
-from latentneural.tndm.adaptive_weights import AdaptiveWeights
+from latentneural.utils import AdaptiveWeights
 
 
 @pytest.mark.unit
@@ -43,9 +43,9 @@ def test_adaptive_weights():
         initial=[0.5, 1, 1, 0, 0],
         min_weight=[0., 0., 0., 0, 0],
         max_weight=[1., 1., 1., 0, 0],
-        update_steps=[1, 2, 1, 1, 1],
-        update_starts=[2, 1, 1, 0, 0],
-        update_rates=[-0.05, -0.1, -0.01, 0, 0]
+        update_step=[1, 2, 1, 1, 1],
+        update_start=[2, 1, 1, 0, 0],
+        update_rate=[-0.05, -0.1, -0.01, 0, 0]
     )
 
     model = TNDM(neural_space=50, behavioural_space=10, max_grad_norm=200)

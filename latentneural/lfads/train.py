@@ -1,5 +1,5 @@
 from tensorflow.python.types.core import Value
-from latentneural.lfads.adaptive_weights import AdaptiveWeights
+from latentneural.utils import AdaptiveWeights
 import time
 import tensorflow as tf
 from typing import List, Tuple, Optional, Dict, Any
