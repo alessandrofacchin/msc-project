@@ -3,7 +3,7 @@ from typing import Dict, Any
 import tensorflow_probability as tfp
 
 from latentneural.utils import ArgsParser
-from .layers import GaussianSampling, GeneratorGRU
+from latentneural.layers import GaussianSampling, GeneratorGRU
 
 
 tf.config.run_functions_eagerly(True)

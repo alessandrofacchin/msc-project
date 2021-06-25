@@ -7,6 +7,7 @@ class GaussianSampling(tf.keras.layers.Layer):
     def __init__(self, name: str="GaussianSampling"):
         super(GaussianSampling, self).__init__(name=name)
 
+    @tf.function
     def call(self, inputs, training: bool=True):
         if training:
             batch = tf.shape(inputs)[-3]

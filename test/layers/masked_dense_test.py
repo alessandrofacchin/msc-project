@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from latentneural.tndm.layers import MaskedDense
+from latentneural.layers import MaskedDense
 
 
 def test_masked_dense():

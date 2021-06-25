@@ -4,7 +4,7 @@ import tensorflow_probability as tfp
 import math as m
 
 from latentneural.utils import ArgsParser
-from .layers import GaussianSampling, GeneratorGRU, MaskedDense
+from latentneural.layers import GaussianSampling, GeneratorGRU, MaskedDense
 
 
 tf.config.run_functions_eagerly(True)
@@ -191,7 +191,7 @@ class TNDM(tf.keras.Model):
       )
     self.loss_weights=loss_weights
     assert (loss_weights.shape == (5,)), ValueError('The adaptive weights must have size 5 for TNDM')
-    
+
     self.tracker_gradient_dict = {'grads/' + TNDM.clean_layer_name(x.name): \
       tf.keras.metrics.Sum(name=TNDM.clean_layer_name(x.name)) for x in \
         self.trainable_variables if 'bias' not in x.name.lower()}
