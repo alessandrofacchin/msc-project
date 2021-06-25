@@ -4,7 +4,7 @@ import tensorflow_probability as tfp
 import math as m
 
 from latentneural.utils import ArgsParser
-from .layers import GaussianSampling, GeneratorGRU
+from .layers import GaussianSampling, GeneratorGRU, MaskedDense
 
 
 tf.config.run_functions_eagerly(True)
@@ -23,9 +23,11 @@ class TNDM(tf.keras.Model):
     self.timestep: float = ArgsParser.get_or_default(kwargs, 'timestep', 0.01)
     self.prior_variance: float = ArgsParser.get_or_default(kwargs, 'prior_variance', 0.1)
     self.original_generator: float = ArgsParser.get_or_default(kwargs, 'original_generator', True)
+    self.behaviour_sigma: float = float(ArgsParser.get_or_default(kwargs, 'behaviour_sigma', 1.0))
+    self.behaviour_type: str = str(ArgsParser.get_or_default(kwargs, 'behaviour_type', 'causal'))
+
     self.encoded_var_min: float = ArgsParser.get_or_default(kwargs, 'encoded_var_min', 0.1)
     self.encoded_var_max: float = ArgsParser.get_or_default(kwargs, 'encoded_var_max', 0.1)
-    self.behaviour_sigma: float = float(ArgsParser.get_or_default(kwargs, 'behaviour_sigma', 1.0))
     if self.encoded_var_min < self.encoded_var_max:
       self.encoded_var_trainable = True
     else:
@@ -44,8 +46,10 @@ class TNDM(tf.keras.Model):
     self.tracker_loss_irrelevant_kldiv = tf.keras.metrics.Sum(name="loss_irrelevant_kldiv")
     self.tracker_loss_reg = tf.keras.metrics.Sum(name="loss_reg")
     self.tracker_loss_count = tf.keras.metrics.Sum(name="loss_count")
-    self.tracker_loss_w_loglike = tf.keras.metrics.Mean(name="loss_w_loglike")
-    self.tracker_loss_w_kldiv = tf.keras.metrics.Mean(name="loss_w_kldiv")
+    self.tracker_loss_w_neural_loglike = tf.keras.metrics.Mean(name="loss_w_neural_loglike")
+    self.tracker_loss_w_behavioural_loglike = tf.keras.metrics.Mean(name="loss_w_behavioural_loglike")
+    self.tracker_loss_w_relevant_kldiv = tf.keras.metrics.Mean(name="loss_w_relevant_kldiv")
+    self.tracker_loss_w_irrelevant_kldiv = tf.keras.metrics.Mean(name="loss_w_irrelevant_kldiv")
     self.tracker_loss_w_reg = tf.keras.metrics.Mean(name="loss_w_reg")
     self.tracker_lr = tf.keras.metrics.Mean(name="lr")
 
@@ -100,8 +104,12 @@ class TNDM(tf.keras.Model):
     
     # BEHAVIOURAL
     behavioural_dense_args: Dict[str, Any] = ArgsParser.get_or_default(kwargs, 'behavioural_dense', {})
-    self.behavioural_dense = tf.keras.layers.Dense(self.behavioural_space, name="BehaviouralDense", **behavioural_dense_args)
-    # TODO: add causal logic here: Linear + Masking
+    if self.behaviour_type == 'causal':
+      self.behavioural_dense = MaskedDense(self.behavioural_space, name="CausalBehaviouralDense", **behavioural_dense_args)
+    elif self.behaviour_type == 'synchronous':
+      self.behavioural_dense = tf.keras.layers.Dense(self.behavioural_space, name="SynchronousBehaviouralDense", **behavioural_dense_args)
+    else:
+      raise NotImplementedError('Behaviour type %s not implemented' % (self.behaviour_type))
 
     # NEURAL
     self.factors_concatenation = tf.keras.layers.Concatenate(name="FactorsConcat")
@@ -198,8 +206,8 @@ class TNDM(tf.keras.Model):
       behavioural = y_true
       (_, b, _, _, _, _), _ = y_pred
       targets = tf.cast(behavioural, dtype=tf.float32)
-      mse = -0.5*tf.reduce_sum(tf.keras.backend.square((targets - b) / tf.math.square(behaviour_sigma)))
-      constant = -tf.reduce_sum(tf.ones_like(b) * (tf.math.log(behaviour_sigma) + 0.5 * tf.math.log(2 * m.pi)))
+      mse = 0.5*tf.reduce_sum(tf.keras.backend.square((targets - b) / tf.math.square(behaviour_sigma)))
+      constant = tf.reduce_sum(tf.ones_like(b) * (tf.math.log(behaviour_sigma) + 0.5 * tf.math.log(2 * m.pi)))
       return mse + constant
     return loss_fun
 
@@ -314,9 +322,11 @@ class TNDM(tf.keras.Model):
     self.tracker_loss_relevant_kldiv.update_state(relevant_kldiv_loss)
     self.tracker_loss_irrelevant_kldiv.update_state(irrelevant_kldiv_loss)
     self.tracker_loss_reg.update_state(reg_loss)
-    self.tracker_loss_w_loglike.update_state(self.loss_weights[0])
-    self.tracker_loss_w_kldiv.update_state(self.loss_weights[1])
-    self.tracker_loss_w_reg.update_state(self.loss_weights[2])
+    self.tracker_loss_w_neural_loglike.update_state(self.loss_weights[0])
+    self.tracker_loss_w_behavioural_loglike.update_state(self.loss_weights[1])
+    self.tracker_loss_w_relevant_kldiv.update_state(self.loss_weights[2])
+    self.tracker_loss_w_irrelevant_kldiv.update_state(self.loss_weights[3])
+    self.tracker_loss_w_reg.update_state(self.loss_weights[4])
     self.tracker_lr.update_state(self.optimizer._decayed_lr('float32').numpy())
     self.tracker_loss_count.update_state(x.shape[0])
     self.tracker_batch_count.update_state(1)
@@ -334,8 +344,10 @@ class TNDM(tf.keras.Model):
       'loss/relevant_kldiv': self.tracker_loss_relevant_kldiv.result() / self.tracker_loss_count.result(),
       'loss/irrelevant_kldiv': self.tracker_loss_irrelevant_kldiv.result() / self.tracker_loss_count.result(),
       'loss/reg': self.tracker_loss_reg.result(),
-      'weights/loglike': self.tracker_loss_w_loglike.result(),
-      'weights/kldiv': self.tracker_loss_w_kldiv.result(),
+      'weights/neural_loglike': self.tracker_loss_w_neural_loglike.result(),
+      'weights/behavioural_loglike': self.tracker_loss_w_behavioural_loglike.result(),
+      'weights/relevant_kldiv': self.tracker_loss_w_relevant_kldiv.result(),
+      'weights/irrelevant_kldiv': self.tracker_loss_w_irrelevant_kldiv.result(),
       'weights/reg': self.tracker_loss_w_reg.result(),
       'learning_rate': self.tracker_lr.result(),
       **{k: v.result() / self.tracker_batch_count.result() for k, v in self.tracker_gradient_dict.items()},
@@ -356,8 +368,10 @@ class TNDM(tf.keras.Model):
         self.tracker_loss_relevant_kldiv,
         self.tracker_loss_irrelevant_kldiv,
         self.tracker_loss_reg,
-        self.tracker_loss_w_loglike,
-        self.tracker_loss_w_kldiv,
+        self.tracker_loss_w_neural_loglike,
+        self.tracker_loss_w_behavioural_loglike,
+        self.tracker_loss_w_relevant_kldiv,
+        self.tracker_loss_w_irrelevant_kldiv,
         self.tracker_loss_w_reg,
         self.tracker_lr,
         self.tracker_loss_count,
