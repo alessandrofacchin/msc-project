@@ -5,7 +5,8 @@ def pytest_sessionstart(session):
     """
     import tensorflow as tf
     tf.config.run_functions_eagerly(True)
-        
+
+
 def pytest_sessionfinish(session, exitstatus):
     """
     Called after whole test run finished, right before

@@ -23,8 +23,11 @@ def test_masked_dense():
     )
 
     model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.InputLayer(input_shape=(4,3,)))
-    model.add(MaskedDense(2, kernel_initializer=tf.keras.initializers.Constant(1)))
+    model.add(tf.keras.layers.InputLayer(input_shape=(4, 3,)))
+    model.add(
+        MaskedDense(
+            2,
+            kernel_initializer=tf.keras.initializers.Constant(1)))
 
     out = model(data)
     tf.debugging.assert_equal(

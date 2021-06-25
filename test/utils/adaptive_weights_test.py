@@ -9,8 +9,10 @@ from latentneural.utils import AdaptiveWeights
 
 @pytest.mark.unit
 def test_adaptive_weights():
-    input_data = np.exp(np.random.randn(10, 100, 50)) # trials X time X neurons
-    input_n_data = np.exp(np.random.randn(10, 100, 10)) # trials X time X behaviour
+    input_data = np.exp(np.random.randn(10, 100, 50)
+                        )  # trials X time X neurons
+    input_n_data = np.exp(np.random.randn(10, 100, 10)
+                          )  # trials X time X behaviour
 
     adaptive_weights = AdaptiveWeights(
         initial=[0.5, 1, 1, 0, 0],
@@ -30,7 +32,12 @@ def test_adaptive_weights():
         loss_weights=adaptive_weights.w
     )
 
-    model.fit(x=input_data, y=input_n_data, callbacks=[adaptive_weights], shuffle=True, epochs=4)
+    model.fit(
+        x=input_data,
+        y=input_n_data,
+        callbacks=[adaptive_weights],
+        shuffle=True,
+        epochs=4)
 
     tf.debugging.assert_equal(adaptive_weights.w[0], 0.45)
     tf.debugging.assert_equal(adaptive_weights.w[1], 0.9)
@@ -39,7 +46,8 @@ def test_adaptive_weights():
 @pytest.mark.unit
 def test_adaptive_weights():
 
-    input_data = np.exp(np.random.randn(10, 100, 50)) # trials X time X neurons
+    input_data = np.exp(np.random.randn(10, 100, 50)
+                        )  # trials X time X neurons
 
     adaptive_weights = AdaptiveWeights(
         initial=[0.5, 1, 1],
@@ -59,7 +67,12 @@ def test_adaptive_weights():
         loss_weights=adaptive_weights.w
     )
 
-    model.fit(x=input_data, y=None, callbacks=[adaptive_weights], shuffle=True, epochs=4)
+    model.fit(
+        x=input_data,
+        y=None,
+        callbacks=[adaptive_weights],
+        shuffle=True,
+        epochs=4)
 
     tf.debugging.assert_equal(adaptive_weights.w[0], 0.45)
     tf.debugging.assert_equal(adaptive_weights.w[1], 0.9)
