@@ -17,23 +17,27 @@ def notebooks_converted():
         os.path.join(original_notebooks_folder, f)) and f[-6:] == '.ipynb']
 
     for notebook in notebooks:
-        new_filename = os.path.join(
+        os.system('jupyter nbconvert --to python --output "%s" "%s"' % (
+            os.path.join(
                 '..',
                 '..',
                 test_notebooks_folder,
                 notebook).replace(
                 '.ipynb',
-                '.py')
-        os.system('jupyter nbconvert --to python --output "%s" "%s"' % (
-            new_filename,
+                '.py'),
             os.path.join(original_notebooks_folder, notebook),
         ))
+        new_filename = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                'deliverables',
+                notebook).replace(
+                '.ipynb',
+                '.py')
         with open(new_filename, 'r') as fp:
             lines = fp.readlines()
-        lines = [x.replace('epochs=1000', 'epoch=1') for x in lines]
+        lines = [x.replace('epochs=1000', 'epochs=1') for x in lines]
         with open(new_filename, 'w') as fp:
             fp.writelines(lines)
-
     return True
 
 
@@ -72,12 +76,14 @@ def test_smoke_lorenz_generator(lorenz_generator_filename):
 
 @pytest.mark.notebook
 @pytest.mark.smoke
+@pytest.mark.slow
 def test_smoke_lfads_on_lorenz(lfads_on_lorenz_filename):
     runpy.run_path(lfads_on_lorenz_filename)
     assert True
 
 @pytest.mark.notebook
 @pytest.mark.smoke
+@pytest.mark.slow
 def test_smoke_tndm_on_lorenz(tndm_on_lorenz_filename):
     runpy.run_path(tndm_on_lorenz_filename)
     assert True
