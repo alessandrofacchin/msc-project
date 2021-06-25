@@ -17,16 +17,23 @@ def notebooks_converted():
         os.path.join(original_notebooks_folder, f)) and f[-6:] == '.ipynb']
 
     for notebook in notebooks:
-        os.system('jupyter nbconvert --to python --output "%s" "%s"' % (
-            os.path.join(
+        new_filename = os.path.join(
                 '..',
                 '..',
                 test_notebooks_folder,
                 notebook).replace(
                 '.ipynb',
-                '.py'),
+                '.py')
+        os.system('jupyter nbconvert --to python --output "%s" "%s"' % (
+            new_filename,
             os.path.join(original_notebooks_folder, notebook),
         ))
+        with open(new_filename, 'r') as fp:
+            lines = fp.readlines()
+        lines = [x.replace('epochs=1000', 'epoch=1') for x in lines]
+        with open(new_filename, 'w') as fp:
+            fp.writelines(lines)
+
     return True
 
 
