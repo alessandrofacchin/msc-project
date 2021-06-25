@@ -59,7 +59,7 @@ def tndm_on_lorenz_filename(notebooks_converted):
         return os.path.join('.', 'test', 'notebooks',
                             'deliverables', 'tndm_on_lorenz.py')
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope='module', autouse=True)
 def cleanup(request):
     def remove_test_dir():
         test_notebooks_folder = os.path.join(
