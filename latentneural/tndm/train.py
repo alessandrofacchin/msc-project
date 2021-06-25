@@ -27,6 +27,8 @@ def train(model_settings: Dict[str, Any], optimizer: tf.optimizers.Optimizer, ep
             kwargs = dict(validation_data=(val_dataset[0], val_dataset[1]))
         else:
             kwargs = dict(validation_data=(None, None))
+    else:
+        kwargs={}
 
     model = TNDM(
         neural_space=neural_dims[-1],
