@@ -12,11 +12,15 @@ import yaml
 import os
 import pandas as pd
 from copy import deepcopy
+from sklearn.linear_model import Ridge
+from datetime import datetime
+import getpass
+import socket
 
-from latentneural.utils import AdaptiveWeights, logger
-from latentneural.models import TNDM, LFADS
+from latentneural import TNDM, LFADS
+from latentneural.utils import AdaptiveWeights, logger, CustomEncoder
 from latentneural.data import DataManager
-# from latentneural.
+import latentneural.losses as lnl
 
 
 tf.config.run_functions_eagerly(True)
@@ -158,12 +162,9 @@ class Runtime(object):
         return model, history
 
     @staticmethod
-    def output_weights(model: tf.keras.Model, directory: str):
-        model.save(directory)
-
-
-    @staticmethod
     def train_from_file(settings_path: str):
+        start_time=datetime.utcnow()
+
         is_json = settings_path.split('.')[-1].lower() == 'json'
         is_yaml = settings_path.split('.')[-1].lower() in ['yaml', 'yml']
         if is_json:
@@ -178,7 +179,15 @@ class Runtime(object):
         logger.info('Loaded settings file:\n%s' % yaml.dump(
             settings, default_flow_style=None, default_style=''))
 
-        model_type, model_settings, layers_settings, data, runtime_settings, output_directory = Runtime.parse_settings(
+        if 'seed' in settings.keys():
+            seed = settings['seed']
+        else:
+            seed = np.random.randint(0, 2**32 - 1)
+        np.random.seed(seed)
+        tf.random.set_seed(seed)
+        logger.info('Seed was set to %d' % (seed))
+
+        model_type, model_settings, layers_settings, data, dataset_settings, runtime_settings, output_directory = Runtime.parse_settings(
             settings)
         (d_n_train, d_n_validation, _), (d_b_train, d_b_validation, _), _ = data
         optimizer, adaptive_weights, adaptive_lr, epochs, batch_size = runtime_settings
@@ -201,39 +210,89 @@ class Runtime(object):
         model.save(os.path.join(output_directory, 'weights'))
         logger.info('Weights saved, now saving metrics history')
 
-        pd.DataFrame(history.history).to_csv(os.path.join(output_directory, 'history'))
+        pd.DataFrame(history.history).to_csv(os.path.join(output_directory, 'history.csv'))
         logger.info('Metrics history saved, now evaluating the model')
 
-
+        stats = Runtime.evaluate_model(data, model)
+        with open(os.path.join(output_directory, 'performance.json'), 'w') as fp:
+            json.dump(stats, fp, cls=CustomEncoder, indent=2)
         logger.info('Model evaluated, now saving settings')
+
+        end_time=datetime.utcnow()
+        settings = dict(
+            model=model_settings,
+            dataset=dataset_settings,
+            default_layers_settings=layers_settings.default_factory(),
+            layers_settings=layers_settings,
+            seed=seed,
+            commit_hash=os.popen('git rev-parse HEAD').read().rstrip(),
+            start_time=start_time.strftime('%Y-%m-%d %H:%M:%S.%f%Z'),
+            end_time=end_time.strftime('%Y-%m-%d %H:%M:%S.%f%Z'),
+            elapsed_time=str(end_time-start_time),
+            author=getpass.getuser(),
+            machine=socket.gethostname(),
+            cpu_only_flag=ArgsParser.get_or_default(dict(os.environ), 'CPU_ONLY', 'FALSE') == 'TRUE',
+            visible_devices=tf.config.get_visible_devices()
+        )
+        with open(os.path.join(output_directory, 'metadata.json'), 'w') as fp:
+            json.dump(settings, fp, cls=CustomEncoder, indent=2)
+        logger.info('Settings saved, execution terminated')
 
     @staticmethod
     def evaluate_model(data, model: tf.keras.Model):
         (d_n_train, d_n_validation, d_n_test), (d_b_train, d_b_validation, d_b_test), (d_l_train, d_l_validation, d_l_test) = data
-
+        train_stats, ridge_model = Runtime.evaluate_performance(model, d_n_train, d_b_train, d_l_train)
+        validation_stats, _ = Runtime.evaluate_performance(model, d_n_validation, d_b_validation, d_l_validation, ridge_model)
+        test_stats, _ = Runtime.evaluate_performance(model, d_n_test, d_b_test, d_l_test, ridge_model)
+        return dict(
+            train=train_stats,
+            validation=validation_stats,
+            test=test_stats
+        )
     
-    def evaluate_performance(model_type: ModelType, model: tf.keras.Model, neural: tf.Tensor, behaviour: tf.Tensor, latent: tf.Tensor):
-        if model_type.with_behaviour:
+    def evaluate_performance(model: tf.keras.Model, neural: tf.Tensor, behaviour: tf.Tensor, latent: tf.Tensor, ridge_model=None):
+        if isinstance(model, TNDM):
             log_f, b, (g0_r, mean_r, logvar_r), (g0_r, mean_i, logvar_i), (z_r, z_i), inputs = model(neural)
             z = np.concatenate([z_r.numpy().T, z_i.numpy().T], axis=0).T
-        else:
+        elif isinstance(model, LFADS):
             log_f, (g0, mean, logvar), z, inputs = model(neural)
+        else:
+            raise ValueError('Model not recognized')
 
         # Behaviour likelihood
-        if model_type.with_behaviour:
-            pass
+        if model.with_behaviour:
+            loss_fun = lnl.gaussian_loglike_loss(model.behaviour_sigma, [])
+            b_like = loss_fun(behaviour, b).numpy() / behaviour.shape[0]
         else:
-            pass
+            b_like = None
 
         # Neural likelihood
+        loss_fun = lnl.poisson_loglike_loss(model.timestep, ([0], [1]))
+        n_like = loss_fun(None, (log_f, inputs)).numpy() / inputs.shape[0]
 
         # Behaviour R2
-        if model_type.with_behaviour:
-            pass
+        if model.with_behaviour:
+            unexplained_error = tf.reduce_sum(tf.square(behaviour - b)).numpy()
+            total_error = tf.reduce_sum(tf.square(behaviour - tf.reduce_mean(behaviour, axis=[0,1]))).numpy()
+            b_r2 = 1 - (unexplained_error / (total_error + 1e-10))
         else:
-            pass
+            b_r2 = None
 
         # Latent R2
+        z_unsrt = z.T.reshape(z.T.shape[0], z.T.shape[1] * z.T.shape[2]).T
+        l = latent.T.reshape(latent.T.shape[0], latent.T.shape[1] * latent.T.shape[2]).T
+        if ridge_model is None:
+            ridge_model = Ridge(alpha=1.0)
+            ridge_model.fit(z_unsrt, l)
+        z_srt = ridge_model.predict(z_unsrt)
+        unexplained_error = tf.reduce_sum(tf.square(l - z_srt)).numpy()
+        total_error = tf.reduce_sum(tf.square(l - tf.reduce_mean(l, axis=[0,1]))).numpy()
+        l_r2 = 1 - (unexplained_error / (total_error + 1e-10))
+        return dict(
+            behaviour_likelihood=b_like, 
+            neural_likelihood=n_like,
+            behaviour_r2=b_r2,
+            neural_r2=l_r2), ridge_model
 
     @staticmethod
     def parse_settings(settings: Dict[str, Any]):
@@ -289,7 +348,7 @@ class Runtime(object):
         batch_size = ArgsParser.get_or_default(runtime, 'batch_size', 8)
         runtime_settings = optimizer, weights, lr_callback, epochs, batch_size
 
-        return model_type, model_settings, layers_settings, data, runtime_settings, output_directory
+        return model_type, model_settings, layers_settings, data, dataset_settings, runtime_settings, output_directory
 
     @staticmethod
     def parse_model_settings(model_settings):

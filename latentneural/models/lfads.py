@@ -1,3 +1,4 @@
+from __future__ import annotations
 import tensorflow as tf
 from typing import Dict, Any
 import tensorflow_probability as tfp
@@ -29,6 +30,7 @@ class LFADS(tf.keras.Model):
             kwargs, 'timestep', 0.01)
         self.prior_variance: float = ArgsParser.get_or_default(
             kwargs, 'prior_variance', 0.1)
+        self.with_behaviour = False
 
         layers: Dict[str, Any] = defaultdict(
             lambda: dict(
@@ -88,7 +90,7 @@ class LFADS(tf.keras.Model):
         self.pre_decoder_activation = tf.keras.layers.Activation('tanh')
         decoder_args: Dict[str, Any] = layers['decoder']
         self.original_generator: float = ArgsParser.get_or_default_and_remove(
-            decoder_args, 'original_cell', True)
+            decoder_args, 'original_cell', False)
         if self.original_generator:
             decoder_cell = GeneratorGRU(self.encoded_space, **decoder_args)
             self.decoder = tf.keras.layers.RNN(
@@ -104,6 +106,16 @@ class LFADS(tf.keras.Model):
         # NEURAL
         self.neural_dense = tf.keras.layers.Dense(
             self.neural_space, name="NeuralDense", **layers['neural_dense'])
+
+    @staticmethod
+    def loaded_loss(*args, **kwargs):
+        raise NotImplementedError('Loss functions not accessible on loaded models')
+
+    @staticmethod
+    def load(filepath) -> LFADS:
+        model: LFADS = tf.keras.models.load_model(filepath, 
+            custom_objects=dict(loss_fun=LFADS.loaded_loss))
+        return model
 
     @tf.function
     def call(self, inputs, training: bool = True):

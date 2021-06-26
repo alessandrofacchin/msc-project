@@ -68,7 +68,6 @@ def cleanup(request):
         remove_folder(test_notebooks_folder)
     request.addfinalizer(remove_test_dir)
 
-
 @pytest.mark.notebook
 @pytest.mark.smoke
 def test_smoke_lorenz_generator(lorenz_generator_filename):

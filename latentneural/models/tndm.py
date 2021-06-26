@@ -1,3 +1,4 @@
+from __future__ import annotations
 import tensorflow as tf
 from typing import Dict, Any
 import tensorflow_probability as tfp
@@ -35,6 +36,7 @@ class TNDM(tf.keras.Model):
             kwargs, 'timestep', 0.01)
         self.prior_variance: float = ArgsParser.get_or_default(
             kwargs, 'prior_variance', 0.1)
+        self.with_behaviour = True
 
         layers: Dict[str, Any] = defaultdict(
             lambda: dict(
@@ -115,7 +117,7 @@ class TNDM(tf.keras.Model):
             'tanh')
         relevant_decoder_args: Dict[str, Any] = layers['relevant_decoder']
         self.relevant_decoder_original_cell: float = ArgsParser.get_or_default_and_remove(
-            relevant_decoder_args, 'original_cell', True)
+            relevant_decoder_args, 'original_cell', False)
         if self.relevant_decoder_original_cell:
             relevant_decoder_cell = GeneratorGRU(
                 self.encoded_space, **relevant_decoder_args)
@@ -129,7 +131,7 @@ class TNDM(tf.keras.Model):
             'tanh')
         irrelevant_decoder_args: Dict[str, Any] = layers['irrelevant_decoder']
         self.irrelevant_decoder_original_cell: float = ArgsParser.get_or_default_and_remove(
-            irrelevant_decoder_args, 'original_cell', True)
+            irrelevant_decoder_args, 'original_cell', False)
         if self.irrelevant_decoder_original_cell:
             irrelevant_decoder_cell = GeneratorGRU(
                 self.encoded_space, **irrelevant_decoder_args)
@@ -166,6 +168,16 @@ class TNDM(tf.keras.Model):
             name="FactorsConcat")
         self.neural_dense = tf.keras.layers.Dense(
             self.neural_space, name="NeuralDense", **layers['neural_dense'])
+
+    @staticmethod
+    def loaded_loss(*args, **kwargs):
+        raise NotImplementedError('Loss functions not accessible on loaded models')
+
+    @staticmethod
+    def load(filepath) -> TNDM:
+        model: TNDM = tf.keras.models.load_model(filepath, 
+            custom_objects=dict(loss_fun=TNDM.loaded_loss))
+        return model
 
     @tf.function
     def call(self, inputs, training: bool = True):

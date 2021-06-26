@@ -1,10 +1,25 @@
 import tensorflow as tf
 import numpy as np
 import pytest
+import os
 
 from latentneural import TNDM
-from latentneural.utils import AdaptiveWeights
+from latentneural.utils import AdaptiveWeights, upsert_empty_folder, remove_folder
 
+
+@pytest.fixture(scope='module', autouse=True)
+def cleanup(request):
+    def remove_test_dir():
+        folder = os.path.join(
+            'test', 'models', 'tndm_tmp')
+        remove_folder(folder)
+    request.addfinalizer(remove_test_dir)
+
+@pytest.fixture(scope='function')
+def save_location():
+    folder = os.path.join('test', 'models', 'tndm_tmp')
+    upsert_empty_folder(folder)
+    return folder
 
 @pytest.mark.unit
 def test_dimensionality():
@@ -39,7 +54,7 @@ def test_dimensionality():
 
 
 @pytest.mark.unit
-def test_train_model_quick():
+def test_train_model_quick(save_location):
     neural_data_train = np.random.binomial(1, 0.5, (10, 100, 50)).astype(
         float)  # test_trials X time X neurons
     behaviour_data_train = np.exp(np.random.randn(
@@ -73,3 +88,7 @@ def test_train_model_quick():
         validation_data=(
             neural_data_val,
             behaviour_data_val))
+
+    model.save(save_location)
+    model_new = TNDM.load(save_location)
+    model_new(neural_data_train)

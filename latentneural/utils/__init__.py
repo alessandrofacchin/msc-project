@@ -5,3 +5,4 @@ from .upsert_empty_folder import upsert_empty_folder
 from .remove_folder import remove_folder
 from .adaptive_weights import AdaptiveWeights
 from .clean_layer_name import clean_layer_name
+from .custom_encoder import CustomEncoder

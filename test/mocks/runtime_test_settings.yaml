@@ -45,8 +45,7 @@ model:
     relevant_factors: 2
     timestep: 0.01
   type: tndm
-output: {directory: test/mocks/runtime_test_outputs, save_plots: false,
-  save_settings: true}
+output: {directory: test/mocks/runtime_test_outputs}
 runtime:
   batch_size: 32
   epochs: 2
