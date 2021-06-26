@@ -36,6 +36,7 @@ def notebooks_converted():
         with open(new_filename, 'r') as fp:
             lines = fp.readlines()
         lines = [x.replace('epochs=1000', 'epochs=1') for x in lines]
+        lines = [x for x in lines if ".show(" not in x]
         with open(new_filename, 'w') as fp:
             fp.writelines(lines)
     return True

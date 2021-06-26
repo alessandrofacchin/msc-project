@@ -10,11 +10,13 @@ import numpy as np
 import json
 import yaml
 import os
+import pandas as pd
 from copy import deepcopy
 
 from latentneural.utils import AdaptiveWeights, logger
 from latentneural.models import TNDM, LFADS
 from latentneural.data import DataManager
+# from latentneural.
 
 
 tf.config.run_functions_eagerly(True)
@@ -141,7 +143,7 @@ class Runtime(object):
         )
 
         try:
-            model.fit(
+            history = model.fit(
                 x=x,
                 y=y,
                 callbacks=callbacks,
@@ -151,9 +153,14 @@ class Runtime(object):
                 validation_data=validation_data
             )
         except KeyboardInterrupt:
-            return model
+            return model, None
 
-        return model
+        return model, history
+
+    @staticmethod
+    def output_weights(model: tf.keras.Model, directory: str):
+        model.save(directory)
+
 
     @staticmethod
     def train_from_file(settings_path: str):
@@ -171,25 +178,62 @@ class Runtime(object):
         logger.info('Loaded settings file:\n%s' % yaml.dump(
             settings, default_flow_style=None, default_style=''))
 
-        model_type, model_settings, layers_settings, data, runtime_settings, logdir = Runtime.parse_settings(
+        model_type, model_settings, layers_settings, data, runtime_settings, output_directory = Runtime.parse_settings(
             settings)
-        train_dataset, val_dataset = data
+        (d_n_train, d_n_validation, _), (d_b_train, d_b_validation, _), _ = data
         optimizer, adaptive_weights, adaptive_lr, epochs, batch_size = runtime_settings
         logger.info('Arguments parsed')
 
-        model = Runtime.train(
+        model, history = Runtime.train(
             model_type=model_type,
             model_settings=model_settings,
             layers_settings=layers_settings,
-            train_dataset=train_dataset,
-            val_dataset=val_dataset,
+            train_dataset=(d_n_train, d_b_train),
+            val_dataset=(d_n_validation, d_b_validation),
             optimizer=optimizer,
             adaptive_weights=adaptive_weights,
             adaptive_lr=adaptive_lr,
             epochs=epochs,
             batch_size=batch_size,
-            logdir=logdir)
-        logger.info('Model training finished')
+            logdir=os.path.join(output_directory, 'logs'))
+        logger.info('Model training finished, now saving weights')
+
+        model.save(os.path.join(output_directory, 'weights'))
+        logger.info('Weights saved, now saving metrics history')
+
+        pd.DataFrame(history.history).to_csv(os.path.join(output_directory, 'history'))
+        logger.info('Metrics history saved, now evaluating the model')
+
+
+        logger.info('Model evaluated, now saving settings')
+
+    @staticmethod
+    def evaluate_model(data, model: tf.keras.Model):
+        (d_n_train, d_n_validation, d_n_test), (d_b_train, d_b_validation, d_b_test), (d_l_train, d_l_validation, d_l_test) = data
+
+    
+    def evaluate_performance(model_type: ModelType, model: tf.keras.Model, neural: tf.Tensor, behaviour: tf.Tensor, latent: tf.Tensor):
+        if model_type.with_behaviour:
+            log_f, b, (g0_r, mean_r, logvar_r), (g0_r, mean_i, logvar_i), (z_r, z_i), inputs = model(neural)
+            z = np.concatenate([z_r.numpy().T, z_i.numpy().T], axis=0).T
+        else:
+            log_f, (g0, mean, logvar), z, inputs = model(neural)
+
+        # Behaviour likelihood
+        if model_type.with_behaviour:
+            pass
+        else:
+            pass
+
+        # Neural likelihood
+
+        # Behaviour R2
+        if model_type.with_behaviour:
+            pass
+        else:
+            pass
+
+        # Latent R2
 
     @staticmethod
     def parse_settings(settings: Dict[str, Any]):
@@ -203,7 +247,6 @@ class Runtime(object):
         # OUTPUT
         output = ArgsParser.get_or_error(settings, 'output')
         output_directory = ArgsParser.get_or_error(output, 'directory')
-        logdir = os.path.join(output_directory, 'logs')
 
         # DATA
         data = ArgsParser.get_or_error(settings, 'data')
@@ -228,7 +271,11 @@ class Runtime(object):
             dataset, latent_keys)
         valid_available = (d_b_validation is not None) and (
             d_n_validation is not None) if model_type.with_behaviour else (d_n_validation is not None)
-        data = ((d_n_train, d_b_train), (d_n_validation, d_b_validation))
+        data = (
+            (d_n_train, d_n_validation, d_n_test),
+            (d_b_train, d_b_validation, d_b_test),
+            (d_l_train, d_l_validation, d_l_test)
+        )
 
         # RUNTIME
         runtime = ArgsParser.get_or_default(settings, 'runtime', {})
@@ -242,7 +289,7 @@ class Runtime(object):
         batch_size = ArgsParser.get_or_default(runtime, 'batch_size', 8)
         runtime_settings = optimizer, weights, lr_callback, epochs, batch_size
 
-        return model_type, model_settings, layers_settings, data, runtime_settings, logdir
+        return model_type, model_settings, layers_settings, data, runtime_settings, output_directory
 
     @staticmethod
     def parse_model_settings(model_settings):
