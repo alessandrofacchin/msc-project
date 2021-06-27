@@ -276,4 +276,4 @@ class Runtime(object):
             behaviour_likelihood=b_like, 
             neural_likelihood=n_like,
             behaviour_r2=b_r2,
-            neural_r2=l_r2), ridge_model
+            latent_r2=l_r2), ridge_model
