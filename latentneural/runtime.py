@@ -235,10 +235,10 @@ class Runtime(object):
     
     def evaluate_performance(model: tf.keras.Model, neural: tf.Tensor, behaviour: tf.Tensor, latent: tf.Tensor, ridge_model=None):
         if isinstance(model, TNDM):
-            log_f, b, (g0_r, mean_r, logvar_r), (g0_r, mean_i, logvar_i), (z_r, z_i), inputs = model(neural)
+            log_f, b, (g0_r, mean_r, logvar_r), (g0_r, mean_i, logvar_i), (z_r, z_i), inputs = model(neural, training=False)
             z = np.concatenate([z_r.numpy().T, z_i.numpy().T], axis=0).T
         elif isinstance(model, LFADS):
-            log_f, (g0, mean, logvar), z, inputs = model(neural)
+            log_f, (g0, mean, logvar), z, inputs = model(neural, training=False)
             z = z.numpy()
         else:
             raise ValueError('Model not recognized')
