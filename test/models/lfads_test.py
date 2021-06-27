@@ -82,9 +82,14 @@ def test_train_model_quick(save_location):
             neural_data_val,
             None))
 
+    before = model(neural_data_train, training=False)[0]
     model.save(save_location)
     model_new = LFADS.load(save_location)
-    model_new(neural_data_train)
+    after = model_new(neural_data_train, training=False)[0]
+
+    tf.debugging.assert_equal(
+        before, after
+    )
 
 @pytest.mark.regression
 @pytest.mark.slow

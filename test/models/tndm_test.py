@@ -90,6 +90,11 @@ def test_train_model_quick(save_location):
             neural_data_val,
             behaviour_data_val))
 
+    before = model(neural_data_train, training=False)[0]
     model.save(save_location)
     model_new = TNDM.load(save_location)
-    model_new(neural_data_train)
+    after = model_new(neural_data_train, training=False)[0]
+
+    tf.debugging.assert_equal(
+        before, after
+    )

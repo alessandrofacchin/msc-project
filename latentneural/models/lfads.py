@@ -1,42 +1,48 @@
 from __future__ import annotations
+from copy import deepcopy
 import tensorflow as tf
 from typing import Dict, Any
-import tensorflow_probability as tfp
 from collections import defaultdict
+import json
 
 from latentneural.utils import ArgsParser, clean_layer_name
 from latentneural.layers import GaussianSampling, GeneratorGRU
 from latentneural.losses import gaussian_kldiv_loss, poisson_loglike_loss, regularization_loss
+from .model_loader import ModelLoader
 
 
 tf.config.run_functions_eagerly(True)
 
 
-class LFADS(tf.keras.Model):
+class LFADS(ModelLoader, tf.keras.Model):
 
     _WEIGHTS_NUM = 3
 
     def __init__(self, **kwargs: Dict[str, Any]):
-        super(LFADS, self).__init__()
+        tf.keras.Model.__init__(self)
 
-        self.encoded_space: int = ArgsParser.get_or_default(
-            kwargs, 'encoded_space', 64)
-        self.factors: int = ArgsParser.get_or_default(kwargs, 'factors', 3)
-        self.neural_space: int = ArgsParser.get_or_default(
-            kwargs, 'neural_space', 50)
-        self.max_grad_norm: float = ArgsParser.get_or_default(
-            kwargs, 'max_grad_norm', 200)
-        self.timestep: float = ArgsParser.get_or_default(
-            kwargs, 'timestep', 0.01)
-        self.prior_variance: float = ArgsParser.get_or_default(
-            kwargs, 'prior_variance', 0.1)
+        self.encoded_space: int = int(ArgsParser.get_or_default(
+            kwargs, 'encoded_space', 64))
+        self.factors: int = int(ArgsParser.get_or_default(kwargs, 'factors', 3))
+        self.neural_space: int = int(ArgsParser.get_or_default(
+            kwargs, 'neural_space', 50))
+        self.max_grad_norm: float = float(ArgsParser.get_or_default(
+            kwargs, 'max_grad_norm', 200))
+        self.timestep: float = float(ArgsParser.get_or_default(
+            kwargs, 'timestep', 0.01))
+        self.prior_variance: float = float(ArgsParser.get_or_default(
+            kwargs, 'prior_variance', 0.1))
         self.with_behaviour = False
 
-        layers: Dict[str, Any] = defaultdict(
-            lambda: dict(
-                kernel_regularizer=tf.keras.regularizers.L2(l=0.1),
-                kernel_initializer=tf.keras.initializers.VarianceScaling(distribution='normal')),
-            ArgsParser.get_or_default(kwargs, 'layers', {}))
+        layers = ArgsParser.get_or_default(kwargs, 'layers', {})
+        if not isinstance(layers, defaultdict):
+            layers: Dict[str, Any] = defaultdict(
+                lambda: dict(
+                    kernel_regularizer=tf.keras.regularizers.L2(l=0.1),
+                    kernel_initializer=tf.keras.initializers.VarianceScaling(distribution='normal')),
+                layers
+            )
+        self.layers_settings = deepcopy(layers)
 
         # METRICS
         self.tracker_loss = tf.keras.metrics.Sum(name="loss")
@@ -108,14 +114,20 @@ class LFADS(tf.keras.Model):
             self.neural_space, name="NeuralDense", **layers['neural_dense'])
 
     @staticmethod
-    def loaded_loss(*args, **kwargs):
-        raise NotImplementedError('Loss functions not accessible on loaded models')
+    def load(filename) -> LFADS:
+        return ModelLoader.load(filename, LFADS)
 
-    @staticmethod
-    def load(filepath) -> LFADS:
-        model: LFADS = tf.keras.models.load_model(filepath, 
-            custom_objects=dict(loss_fun=LFADS.loaded_loss))
-        return model
+    def get_settings(self):
+        return dict(        
+            encoded_space=self.encoded_space,
+            factors=self.factors,
+            neural_space=self.neural_space,
+            max_grad_norm=self.max_grad_norm,
+            timestep=self.timestep,
+            prior_variance=self.prior_variance,
+            layers=self.layers_settings,
+            default_layer_settings=self.layers_settings.default_factory()
+        )
 
     @tf.function
     def call(self, inputs, training: bool = True):

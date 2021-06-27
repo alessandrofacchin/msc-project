@@ -1,5 +1,6 @@
 from __future__ import annotations
 import tensorflow as tf
+from copy import deepcopy
 from typing import Dict, Any
 import tensorflow_probability as tfp
 import math as m
@@ -8,41 +9,46 @@ from collections import defaultdict
 from latentneural.utils import ArgsParser, clean_layer_name
 from latentneural.layers import GaussianSampling, GeneratorGRU, MaskedDense
 from latentneural.losses import gaussian_kldiv_loss, poisson_loglike_loss, regularization_loss, gaussian_loglike_loss
+from .model_loader import ModelLoader
 
 
 tf.config.run_functions_eagerly(True)
 
 
-class TNDM(tf.keras.Model):
+class TNDM(ModelLoader, tf.keras.Model):
 
     _WEIGHTS_NUM = 5
 
     def __init__(self, **kwargs: Dict[str, Any]):
-        super(TNDM, self).__init__()
+        tf.keras.Model.__init__(self)
 
-        self.encoded_space: int = ArgsParser.get_or_default(
-            kwargs, 'encoded_space', 64)
-        self.irrelevant_factors: int = ArgsParser.get_or_default(
-            kwargs, 'irrelevant_factors', 3)
-        self.relevant_factors: int = ArgsParser.get_or_default(
-            kwargs, 'relevant_factors', 3)
-        self.neural_space: int = ArgsParser.get_or_default(
-            kwargs, 'neural_space', 50)
-        self.behavioural_space: int = ArgsParser.get_or_default(
-            kwargs, 'behavioural_space', 1)
-        self.max_grad_norm: float = ArgsParser.get_or_default(
-            kwargs, 'max_grad_norm', 200)
-        self.timestep: float = ArgsParser.get_or_default(
-            kwargs, 'timestep', 0.01)
-        self.prior_variance: float = ArgsParser.get_or_default(
-            kwargs, 'prior_variance', 0.1)
+        self.encoded_space: int = int(ArgsParser.get_or_default(
+            kwargs, 'encoded_space', 64))
+        self.irrelevant_factors: int = int(ArgsParser.get_or_default(
+            kwargs, 'irrelevant_factors', 3))
+        self.relevant_factors: int = int(ArgsParser.get_or_default(
+            kwargs, 'relevant_factors', 3))
+        self.neural_space: int = int(ArgsParser.get_or_default(
+            kwargs, 'neural_space', 50))
+        self.behavioural_space: int = int(ArgsParser.get_or_default(
+            kwargs, 'behavioural_space', 1))
+        self.max_grad_norm: float = float(ArgsParser.get_or_default(
+            kwargs, 'max_grad_norm', 200))
+        self.timestep: float = float(ArgsParser.get_or_default(
+            kwargs, 'timestep', 0.01))
+        self.prior_variance: float = float(ArgsParser.get_or_default(
+            kwargs, 'prior_variance', 0.1))
         self.with_behaviour = True
 
-        layers: Dict[str, Any] = defaultdict(
-            lambda: dict(
-                kernel_regularizer=tf.keras.regularizers.L2(l=0.1),
-                kernel_initializer=tf.keras.initializers.VarianceScaling(distribution='normal')),
-            ArgsParser.get_or_default(kwargs, 'layers', {}))
+        layers = ArgsParser.get_or_default(kwargs, 'layers', {})
+        if not isinstance(layers, defaultdict):
+            layers: Dict[str, Any] = defaultdict(
+                lambda: dict(
+                    kernel_regularizer=tf.keras.regularizers.L2(l=0.1),
+                    kernel_initializer=tf.keras.initializers.VarianceScaling(distribution='normal')),
+                layers
+            )
+        self.layers_settings = deepcopy(layers)
 
         # METRICS
         self.tracker_loss = tf.keras.metrics.Sum(name="loss")
@@ -170,14 +176,22 @@ class TNDM(tf.keras.Model):
             self.neural_space, name="NeuralDense", **layers['neural_dense'])
 
     @staticmethod
-    def loaded_loss(*args, **kwargs):
-        raise NotImplementedError('Loss functions not accessible on loaded models')
+    def load(filename) -> TNDM:
+        return ModelLoader.load(filename, TNDM)
 
-    @staticmethod
-    def load(filepath) -> TNDM:
-        model: TNDM = tf.keras.models.load_model(filepath, 
-            custom_objects=dict(loss_fun=TNDM.loaded_loss))
-        return model
+    def get_settings(self):
+        return dict(        
+            encoded_space=self.encoded_space,
+            irrelevant_factors=self.irrelevant_factors,
+            relevant_factors=self.relevant_factors,
+            neural_space=self.neural_space,
+            behavioural_space=self.behavioural_space,
+            max_grad_norm=self.max_grad_norm,
+            timestep=self.timestep,
+            prior_variance=self.prior_variance,
+            layers=self.layers_settings,
+            default_layer_settings=self.layers_settings.default_factory()
+        )
 
     @tf.function
     def call(self, inputs, training: bool = True):
