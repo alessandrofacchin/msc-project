@@ -239,6 +239,7 @@ class Runtime(object):
             z = np.concatenate([z_r.numpy().T, z_i.numpy().T], axis=0).T
         elif isinstance(model, LFADS):
             log_f, (g0, mean, logvar), z, inputs = model(neural)
+            z = z.numpy()
         else:
             raise ValueError('Model not recognized')
 
