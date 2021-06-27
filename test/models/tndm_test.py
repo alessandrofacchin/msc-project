@@ -26,7 +26,7 @@ def save_location():
 def test_dimensionality():
     input_data = np.exp(np.random.randn(10, 100, 50)
                         )  # trials X time X neurons
-    model = TNDM(neural_space=50, behavioural_space=2, layers={'decoder': {'original_cell': True}})
+    model = TNDM(neural_space=50, behavioural_space=2, layers={'irrelevant_decoder': {'original_cell': True}, 'relevant_decoder': {'original_cell': True}})
     model.build(input_shape=[None] + list(input_data.shape[1:]))
 
     f, b, (g0_r, r_mean, r_logvar), (g0_i, i_mean, i_logvar), (z_r,
